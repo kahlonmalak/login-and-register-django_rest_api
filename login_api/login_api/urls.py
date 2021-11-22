@@ -20,6 +20,8 @@ from rest_framework_simplejwt import views as jwt_viewsurlpatterns
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('accounts.urls')),
+    path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
+    
 ]
 
 
