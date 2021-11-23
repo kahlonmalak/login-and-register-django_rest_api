@@ -17,6 +17,7 @@ from .serializer import (
     UserLoginSerializer,
     UserListSerializer
 )
+import jwt
 
 
 
@@ -79,18 +80,21 @@ class UserLoginView(APIView):
 
             return Response(response, status=status_code)   
         
-        
-
+# rom django.contrib.auth.mixins import LoginRequired
 class ChangePasswordView(generics.UpdateAPIView):
     """
     An endpoint for changing password.
     """
-    
 # queryset= User.objects.all()
     serializer_class = ChangePasswordSerializer
-    # model = User
+    model = User
     permission_classes = (IsAuthenticated,)
-    permission_classes=(AllowAny,)
+ 
+    
+    # def post(self,request):
+    #     print(request.user)
+    #     return Response({"message":"success"})
+    
     def get_object(self, queryset=True):
         obj = self.request.user
         return obj
@@ -98,7 +102,7 @@ class ChangePasswordView(generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         self.object = self.get_object()
         serializer = self.get_serializer(data=request.data)
-
+        print('11111111111111111111((((((((((((())))))))))))))))))))))',serializer)
         if serializer.is_valid():
             # Check old password
             if not self.object.check_password(serializer.data.get("old_password")):
