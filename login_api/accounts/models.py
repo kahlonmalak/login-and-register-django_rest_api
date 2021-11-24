@@ -2,7 +2,7 @@ from django.db import models
 
 # Create your models here.
 # from django.db import models
-
+from selenium import webdriver
 # Create your models here.
 import uuid
 from django.utils.translation import ugettext_lazy as _
@@ -12,7 +12,7 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.utils import timezone
 from django.contrib.auth.models import User   
 from .managers import CustomUserManager
-
+from django.contrib.auth import get_user_model
 from django.dispatch import receiver
 from django.urls import reverse
 from django_rest_passwordreset.signals import reset_password_token_created
@@ -73,19 +73,3 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 
-
-    @receiver(reset_password_token_created)
-    def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
-
-        email_plaintext_message = "{}?token={}".format(reverse('password_reset:reset-password-request'), reset_password_token.key)
-
-        send_mail(
-            # title:
-            "Password Reset for {title}".format(title="Some website title"),
-            # message:
-            email_plaintext_message,
-            # from:
-            "noreply@somehost.local",
-            # to:
-            [reset_password_token.user.email]
-        )

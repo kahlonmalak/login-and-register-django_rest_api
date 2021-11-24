@@ -5,7 +5,10 @@ from django.contrib.auth.password_validation import validate_password
 
 # from django.contrib.auth.models import User
 
-# from django.contrib.auth.models import User
+from django.contrib.auth import password_validation
+from django.utils.translation import gettext_lazy as _
+# from rest_framework import serializers
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import update_last_login
@@ -73,61 +76,34 @@ class UserListSerializer(serializers.ModelSerializer):
             
         ) 
         
-        
-#    ...reset password ...
-   
   
 
-# class CustomPasswordResetSerializer(PasswordResetSerializer):
-#     email = serializers.EmailField()
-#     password_reset_form_class = ResetPasswordForm
-
-#     def validate_email(self, value):
-#         # Create PasswordResetForm with the serializer
-#         self.reset_form = self.password_reset_form_class(data=self.initial_data)
-#         if not self.reset_form.is_valid():
-#             raise serializers.ValidationError(self.reset_form.errors)
-
-#         ###### FILTER YOUR USER MODEL ######
-#         if not get_user_model().objects.filter(email=value).exists():
-#             raise serializers.ValidationError(_('Invalid e-mail address'))
-
-#         return value
-
-#     def save(self):
-#         request = self.context.get('request')
-#         # Set some values to trigger the send_email method.
-#         opts = {
-#             'use_https': request.is_secure(),
-#             'from_email': getattr(settings, 'DEFAULT_FROM_EMAIL'),
-#             'request': request,
-#         }
-#         opts.update(self.get_email_options())
-#         self.reset_form.save(**opts)     
-        
-        
-# class ChangePasswordSerializer(serializers.Serializer):
-#     model = User
-
-#     """
-#     Serializer for password change endpoint.
-#     """
-#     old_password = serializers.CharField(required=True)
-#     new_password = serializers.CharField(required=True)                   
-
-
 class ChangePasswordSerializer(serializers.Serializer):
-
-
-    """
-    Serializer for password change endpoint.
-    """
-    old_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True)
+    old_password = serializers.CharField(max_length=128, write_only=True, required=True)
+    new_password1 = serializers.CharField(max_length=128, write_only=True, required=True)
+    new_password2 = serializers.CharField(max_length=128, write_only=True, required=True)
     
     class Meta:
-        model = User
-        fields = (
-            'old_password','new_password'
-            
-        ) 
+        model=User
+        fields=('old_password',' new_password1','new_password2')
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError(
+                _('Your old password was entered incorrectly. Please enter it again.')
+            )
+        return value
+
+    def validate(self, data):
+        if data['new_password1'] != data['new_password2']:
+            raise serializers.ValidationError({'new_password2': _("The two password fields didn't match.")})
+        password_validation.validate_password(data['new_password1'], self.context['request'].user)
+        return data
+
+    def save(self, **kwargs):
+        password = self.validated_data['new_password1']
+        user = self.context['request'].user
+        user.set_password(password)
+        user.save()
+        return user
